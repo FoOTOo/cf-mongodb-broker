@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"errors"
 
 	"github.com/pivotal-cf/brokerapi"
 )
@@ -46,6 +47,12 @@ func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context,
 	spec := brokerapi.ProvisionedServiceSpec{}
 
 	// TODO:
+	// 1. exist ?
+	if serviceDetails.PlanID == "" {
+		return spec, errors.New("plan_id required")
+	}
+	// 2. select plan based on planID
+	// 3. create instance
 
 	return spec, nil
 }

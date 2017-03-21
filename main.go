@@ -18,6 +18,7 @@ const (
 
 func main() {
 	brokerLogger := lager.NewLogger(BrokerName)
+	//brokerLogger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
 	brokerLogger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.DEBUG))
 	brokerLogger.RegisterSink(lager.NewWriterSink(os.Stderr, lager.ERROR))
 
