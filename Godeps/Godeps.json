@@ -1,0 +1,24 @@
+{
+	"ImportPath": "github.com/ultragtx/mongo-broker",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "code.cloudfoundry.org/lager",
+			"Rev": "de8e9c6c6e474e5e3668aea1a9817bdb4ceeceb0"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.3.0-5-g599cba5",
+			"Rev": "599cba5e7b6137d46ddf58fb1765f5d928e69604"
+		},
+		{
+			"ImportPath": "github.com/pivotal-cf/brokerapi",
+			"Rev": "8f25c50c2794f9401a0162e260801e877ea3d002"
+		},
+		{
+			"ImportPath": "github.com/pivotal-cf/brokerapi/auth",
+			"Rev": "8f25c50c2794f9401a0162e260801e877ea3d002"
+		}
+	]
+}
