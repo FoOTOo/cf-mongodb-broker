@@ -29,18 +29,16 @@ func NewClient(hosts, username, password, authSource string) (Client, error) {
 	mgo.SetDebug(true)
 	mgo.SetLogger(logger)
 
-	addresses, error := splitHosts(hosts)
+	addresses, error := splitHosts(hosts, "27017")
 
 	if error != nil {
 		return nil, error
 	}
 
 	dialInfo := mgo.DialInfo{
-		Addrs: addresses,
-		Direct: false,
+		Addrs:   addresses,
+		Direct:  false,
 		Timeout: 30,
-
-
 	}
 
 	return Client{}, nil

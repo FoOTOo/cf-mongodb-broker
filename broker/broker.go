@@ -7,7 +7,28 @@ import (
 	"github.com/pivotal-cf/brokerapi"
 )
 
-type MongoServiceBroker struct{}
+type InstanceCredentials struct {
+	Host     string
+	Port     int
+	Password string
+}
+
+type InstanceCreator interface {
+	Create(instanceID string, serviceDetails brokerapi.ProvisionDetails) error
+	Destroy(instanceID string, details brokerapi.DeprovisionDetails) error
+	//InstanceExists(instanceID string) (bool, error)
+}
+
+type InstanceBinder interface {
+	Bind(instanceID string, bindingID string, details brokerapi.BindDetails) error
+	Unbind(instanceID string, bindingID string, details brokerapi.UnbindDetails) error
+	//InstanceExists(instanceID string) (bool, error)
+}
+
+type MongoServiceBroker struct {
+	InstanceCreators map[string]InstanceCreator
+	InstanceBinders  map[string]InstanceBinder
+}
 
 func (mongoServiceBroker *MongoServiceBroker) Services(context context.Context) []brokerapi.Service {
 	// TODO: read config
@@ -78,6 +99,16 @@ func (mongoServiceBroker *MongoServiceBroker) Unbind(context context.Context, in
 
 	return nil
 }
+
+//func (mongoServiceBroker *MongoServiceBroker) instanceExists(instanceID string) bool {
+//	for _, instanceCreator := range mongoServiceBroker.InstanceCreators {
+//		instanceExists, _ := instanceCreator.InstanceExists(instanceID)
+//		if instanceExists {
+//			return true
+//		}
+//	}
+//	return false
+//}
 
 // LastOperation ...
 // If the broker provisions asynchronously, the Cloud Controller will poll this endpoint

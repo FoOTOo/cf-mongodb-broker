@@ -20,6 +20,8 @@ type AdminService struct {
 	password   string
 	authSource string
 
+	addresses []string
+
 	session *mgo.Session
 }
 
@@ -56,6 +58,7 @@ func NewAdminService(hosts, username, password, authSource string) (*AdminServic
 		username:   username,
 		password:   password,
 		authSource: authSource,
+		addresses:  addresses,
 		session:    session,
 	}
 
@@ -122,6 +125,11 @@ func (adminService *AdminService) CreateDatabase(databaseName string) (*mgo.Data
 		return nil, error
 	}
 
+	error = session.Fsync(false)
+	if error != nil {
+		return nil, error
+	}
+
 	return database, nil
 }
 
@@ -153,6 +161,149 @@ func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
 	}
 
 	return nil
+}
+
+func (adminService *AdminService) CreateUser(databaseName, username, password string) error {
+	session := adminService.session
+	database := session.DB(databaseName)
+
+	// TODO: ??? Not sure if it's correct
+	roles := bson.D{{"role", "readWrite"}, {"db", databaseName}}
+	cmd := &bson.D{{"createUser", username}, {"pwd", password}, {"roles", roles}}
+
+	result := &bson.D{}
+	error := database.Run(cmd, result)
+
+	if error != nil {
+		return error
+	}
+
+	ok := result.Map()["ok"]
+
+	if ok != 1.0 {
+		jsonStr, error := json.MarshalIndent(result.Map(), "", "  ")
+		if error != nil {
+			return error
+		}
+
+		return errors.New(string(jsonStr))
+	}
+
+	return nil
+}
+
+func (adminService *AdminService) DeleteUser(databaseName, username string) error {
+	session := adminService.session
+	database := session.DB(databaseName)
+
+	cmd := &bson.D{{"dropUser", username}}
+
+	result := &bson.D{}
+	error := database.Run(cmd, result)
+
+	if error != nil {
+		return error
+	}
+
+	ok := result.Map()["ok"]
+
+	if ok != 1.0 {
+		jsonStr, error := json.MarshalIndent(result.Map(), "", "  ")
+		if error != nil {
+			return error
+		}
+
+		return errors.New(string(jsonStr))
+	}
+
+	return nil
+}
+
+func (adminService *AdminService) GetConnectionString(databaseName, username, password string) string {
+	parts := []string{"mongodb://", username, ":", password, "@", adminService.GetServerAddresses(), "/", databaseName}
+	return strings.Join(parts, "")
+}
+
+func (adminService *AdminService) GetServerAddresses() string {
+	return strings.Join(adminService.addresses, ",")
+}
+
+func (adminService *AdminService) SaveDoc(doc interface{}, databaseName string, collectionName string) error {
+	//databaseExists, error := adminService.DatabaseExists(databaseName)
+	//
+	//var database *mgo.Database
+	//
+	//if error != nil {
+	//	return error
+	//}
+	//
+	//if !databaseExists {
+	//	database, error = adminService.CreateDatabase(databaseName)
+	//
+	//	if error != nil {
+	//		return error
+	//	}
+	//}
+
+	session := adminService.session
+
+	database := session.DB(databaseName)
+	collection := database.C(collectionName)
+	error := collection.Insert(doc)
+
+	if error != nil {
+		return error
+	}
+
+	error = session.Fsync(false)
+	if error != nil {
+		return nil
+	}
+
+	return nil
+}
+
+func (adminService *AdminService) RemoveDoc(selector interface{}, databaseName string, collectionName string) error {
+	//databaseExists, error := adminService.DatabaseExists(databaseName)
+	//
+	//var database *mgo.Database
+	//
+	//if error != nil {
+	//	return error
+	//}
+	//
+	//if !databaseExists {
+	//	return errors.New("Database not exists")
+	//}
+
+	session := adminService.session
+
+	database := session.DB(databaseName)
+	collection := database.C(collectionName)
+
+	error := collection.Remove(selector)
+
+	if error != nil {
+		return error
+	}
+
+	return nil
+}
+
+func (adminService *AdminService) DocExists(query *bson.M, databaseName string, collectionName string) (bool, error) {
+	session := adminService.session
+
+	database := session.DB(databaseName)
+	collection := database.C(collectionName)
+
+	result := &bson.D{}
+	error := collection.Find(query).One(result)
+
+	if error != nil {
+		return false, error
+	}
+
+	return result != nil, nil
 }
 
 func splitHosts(hosts string, defaultPort string) ([]string, error) {
