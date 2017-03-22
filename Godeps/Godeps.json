@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/ultragtx/mongo-broker",
+	"ImportPath": "github.com/FoOTOo/mongo-service-broker-golang-ultragtx",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Deps": [
