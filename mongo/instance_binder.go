@@ -81,6 +81,11 @@ func (instanceBinder *InstanceBinder) Unbind(instanceID string, bindingID string
 	return nil
 }
 
+func (instanceBinder *InstanceBinder) InstanceBindingExists(instanceID string, bindingID string) (bool, error) {
+	instanceBindingExists, error := instanceBinder.repository.InstanceBindingExists(instanceID, bindingID)
+	return instanceBindingExists, error
+}
+
 func instanceBindingExistsError(instanceID, bindingID string, details brokerapi.BindDetails) error {
 	return errors.New("Instance binding exists, incetanceID: " + instanceID + ", bindingID: " + bindingID)
 }

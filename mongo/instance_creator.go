@@ -91,6 +91,11 @@ func (instanceCreator *InstanceCreator) Destroy(instanceID string, details broke
 	return nil
 }
 
+func (instanceCreator *InstanceCreator) InstanceExists(instanceID string) (bool, error) {
+	instanceExists, error := instanceCreator.repository.InstanceExists(instanceID)
+	return instanceExists, error
+}
+
 func instanceExistsError(instanceID string, details brokerapi.ProvisionDetails) error {
 	return errors.New("Instance exists, incetanceID: " + instanceID + ", serviceID: " + details.ServiceID)
 }

@@ -16,13 +16,13 @@ type InstanceCredentials struct {
 type InstanceCreator interface {
 	Create(instanceID string, serviceDetails brokerapi.ProvisionDetails) error
 	Destroy(instanceID string, details brokerapi.DeprovisionDetails) error
-	//InstanceExists(instanceID string) (bool, error)
+	InstanceExists(instanceID string) (bool, error)
 }
 
 type InstanceBinder interface {
 	Bind(instanceID string, bindingID string, details brokerapi.BindDetails) error
 	Unbind(instanceID string, bindingID string, details brokerapi.UnbindDetails) error
-	//InstanceExists(instanceID string) (bool, error)
+	InstanceBindingExists(instanceID, bindingID string) (bool, error)
 }
 
 type MongoServiceBroker struct {
@@ -33,17 +33,9 @@ type MongoServiceBroker struct {
 func (mongoServiceBroker *MongoServiceBroker) Services(context context.Context) []brokerapi.Service {
 	// TODO: read config
 
-	free := true
-
-	plans := []brokerapi.ServicePlan{
-		brokerapi.ServicePlan{
-			ID:          "SOME-UUID-98769-standard", // TODO: better uuid
-			Name:        "standard",
-			Description: "Standard mongodb plan",
-			Free:        &free,
-			//Bindable:
-			//Metadata:
-		},
+	planList := []brokerapi.ServicePlan{}
+	for _, plan := range mongoServiceBroker.plans() {
+		planList = append(planList, *plan)
 	}
 
 	services := []brokerapi.Service{
@@ -54,7 +46,7 @@ func (mongoServiceBroker *MongoServiceBroker) Services(context context.Context) 
 			Bindable:      true,
 			Tags:          []string{"FoOTOo", "mongodb"},
 			PlanUpdatable: false,
-			Plans:         plans,
+			Plans:         planList,
 			//Requires
 			//Metadata
 			//DashboardClient
@@ -67,13 +59,31 @@ func (mongoServiceBroker *MongoServiceBroker) Services(context context.Context) 
 func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context, instanceID string, serviceDetails brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	spec := brokerapi.ProvisionedServiceSpec{}
 
-	// TODO:
-	// 1. exist ?
 	if serviceDetails.PlanID == "" {
 		return spec, errors.New("plan_id required")
 	}
-	// 2. select plan based on planID
-	// 3. create instance
+
+	planIdentifier := ""
+	for key, plan := range mongoServiceBroker.plans() {
+		if plan.ID == serviceDetails.PlanID {
+			planIdentifier = key
+			break
+		}
+	}
+
+	if planIdentifier == "" {
+		return spec, errors.New("plan_id not recognized")
+	}
+
+	instanceCreator, ok := mongoServiceBroker.InstanceCreators[planIdentifier]
+	if !ok {
+		return spec, errors.New("instance creator not found for plan")
+	}
+
+	error := instanceCreator.Create(instanceID, serviceDetails)
+	if error != nil {
+		return spec, error
+	}
 
 	return spec, nil
 }
@@ -81,7 +91,17 @@ func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context,
 func (mongoServiceBroker *MongoServiceBroker) Deprovision(context context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
 	spec := brokerapi.DeprovisionServiceSpec{}
 
-	// TODO:
+	for _, instanceCreator := range mongoServiceBroker.InstanceCreators {
+		instanceExists, error := instanceCreator.InstanceExists(instanceID)
+
+		if error != nil {
+			return spec, error
+		}
+
+		if instanceExists {
+			return spec, instanceCreator.Destroy(instanceID, details)
+		}
+	}
 
 	return spec, nil
 }
@@ -89,15 +109,59 @@ func (mongoServiceBroker *MongoServiceBroker) Deprovision(context context.Contex
 func (mongoServiceBroker *MongoServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
 	binding := brokerapi.Binding{}
 
-	// TODO:
+	for key, instanceCreator := range mongoServiceBroker.InstanceCreators {
+		instanceExists, error := instanceCreator.InstanceExists(instanceID)
 
-	return binding, nil
+		if error != nil {
+			return binding, error
+		}
+
+		if instanceExists {
+			instanceBinder, ok := mongoServiceBroker.InstanceBinders[key]
+			if !ok {
+				return binding, errors.New("instance binder not found for plan")
+			}
+
+			error := instanceBinder.Bind(instanceID, bindingID, details)
+			return binding, error
+		}
+	}
+
+	return binding, brokerapi.ErrInstanceDoesNotExist
 }
 
 func (mongoServiceBroker *MongoServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails) error {
-	// TODO: nil
+	for _, instanceBinder := range mongoServiceBroker.InstanceBinders {
+		instanceExists, error := instanceBinder.InstanceBindingExists(instanceID, bindingID)
 
-	return nil
+		if error != nil {
+			return error
+		}
+
+		if instanceExists {
+			error = instanceBinder.Unbind(instanceID, bindingID, details)
+			return error
+		}
+	}
+
+	return brokerapi.ErrInstanceDoesNotExist
+}
+
+func (mongoServiceBroker *MongoServiceBroker) plans() map[string]*brokerapi.ServicePlan {
+	plans := map[string]*brokerapi.ServicePlan{}
+
+	free := true
+
+	plans["standard"] = &brokerapi.ServicePlan{
+		ID:          "SOME-UUID-98769-standard", // TODO: better uuid
+		Name:        "standard",
+		Description: "Standard mongodb plan",
+		Free:        &free,
+		//Bindable:
+		//Metadata:
+	}
+
+	return plans
 }
 
 //func (mongoServiceBroker *MongoServiceBroker) instanceExists(instanceID string) bool {
