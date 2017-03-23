@@ -3,15 +3,22 @@ package mongo
 import (
 	"errors"
 	"log"
-	"os"
 	"strings"
 
 	"time"
 
 	"encoding/json"
 
+	"os"
+
+	"fmt"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+)
+
+const (
+	logEnabled = true
 )
 
 type AdminService struct {
@@ -26,9 +33,11 @@ type AdminService struct {
 }
 
 func NewAdminService(hosts, username, password, authSource string) (*AdminService, error) {
-	logger := log.New(os.Stdout, "mongo-broker-mongo:", 0)
-	mgo.SetDebug(true)
-	mgo.SetLogger(logger)
+	if logEnabled {
+		logger := log.New(os.Stdout, "mongo-broker-mongo:", 0)
+		mgo.SetDebug(true)
+		mgo.SetLogger(logger)
+	}
 
 	addresses, error := splitHosts(hosts, "27017")
 
@@ -42,7 +51,7 @@ func NewAdminService(hosts, username, password, authSource string) (*AdminServic
 		Timeout: 30 * time.Second,
 		//Database: authSource,
 		Source:    authSource,
-		Mechanism: "SCRAM_SHA_1",
+		Mechanism: "SCRAM-SHA-1",
 		Username:  username,
 		Password:  password,
 	}
@@ -87,12 +96,13 @@ func (adminService *AdminService) DatabaseExists(databaseName string) (bool, err
 
 func (adminService *AdminService) DeleteDatabase(databaseName string) error {
 	session := adminService.session
-
 	database := session.DB(databaseName)
 
 	if database.Name != databaseName {
 		return errors.New("Database not exist: " + databaseName)
 	}
+
+	// TODO: Remove db owner role
 
 	error := database.DropDatabase()
 
@@ -135,29 +145,24 @@ func (adminService *AdminService) CreateDatabase(databaseName string) (*mgo.Data
 
 func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
 	session := adminService.session
-	database := session.DB(databaseName)
+	database := session.DB(adminService.authSource)
 
-	// TODO: ??? Not sure if it's correct
-	roles := bson.D{{"role", "dbOwner"}, {"db", databaseName}}
-	cmd := &bson.D{{"grantRolesToUser", adminService.username}, {"roles", roles}}
+	user := &mgo.User{
+		Username: adminService.username,
+		//Roles: []mgo.Role{
+		//	"dbOwner",
+		//},
+		OtherDBRoles: map[string][]mgo.Role{
+			databaseName:                           {"dbOwner"},
+			"a0c320a8-4108-4f6d-9a59-b91193a6073c": {"dbOwner"},
+			"admin": {"root"},
+		},
+	}
 
-	result := &bson.D{}
-
-	error := database.Run(cmd, result)
+	error := database.UpsertUser(user)
 
 	if error != nil {
 		return error
-	}
-
-	ok := result.Map()["ok"]
-
-	if ok != 1.0 {
-		jsonStr, error := json.MarshalIndent(result.Map(), "", "  ")
-		if error != nil {
-			return error
-		}
-
-		return errors.New(string(jsonStr))
 	}
 
 	return nil
@@ -168,7 +173,7 @@ func (adminService *AdminService) CreateUser(databaseName, username, password st
 	database := session.DB(databaseName)
 
 	// TODO: ??? Not sure if it's correct
-	roles := bson.D{{"role", "readWrite"}, {"db", databaseName}}
+	roles := []bson.DocElem{{"role", "readWrite"}, {"db", databaseName}}
 	cmd := &bson.D{{"createUser", username}, {"pwd", password}, {"roles", roles}}
 
 	result := &bson.D{}
@@ -177,6 +182,9 @@ func (adminService *AdminService) CreateUser(databaseName, username, password st
 	if error != nil {
 		return error
 	}
+
+	fmt.Print("====== ")
+	fmt.Println(result)
 
 	ok := result.Map()["ok"]
 
@@ -292,7 +300,6 @@ func (adminService *AdminService) RemoveDoc(selector interface{}, databaseName s
 
 func (adminService *AdminService) DocExists(query *bson.M, databaseName string, collectionName string) (bool, error) {
 	session := adminService.session
-
 	database := session.DB(databaseName)
 	collection := database.C(collectionName)
 
