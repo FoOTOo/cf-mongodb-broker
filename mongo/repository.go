@@ -18,13 +18,13 @@ type ServiceInstance struct {
 	PlanID              string `bson:"planID"`
 	OrganizationGUID    string `bson:"organizationGUID"`
 	SpaceGUID           string `bson:"spaceGUID"`
-	DashboardUrl        string `bson:"dashboardUrl, omitempty"`
+	DashboardUrl        string `bson:"dashboardUrl,omitempty"`
 }
 
 type ServiceInstanceBinding struct {
 	BindingID         string `bson:"_id"`
 	ServiceInstanceID string `bson:"serviceInstanceID"`
-	SyslogDrainUrl    string `bson:"syslogDrainUrl, omitempty"`
+	SyslogDrainUrl    string `bson:"syslogDrainUrl,omitempty"`
 	AppGUID           string `bson:"appGUID"`
 }
 

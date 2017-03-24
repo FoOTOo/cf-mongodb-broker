@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	logEnabled = true
+	logEnabled = false
 )
 
 type AdminService struct {
@@ -129,6 +129,11 @@ func (adminService *AdminService) CreateDatabase(databaseName string) (*mgo.Data
 		return nil, error
 	}
 
+	//error = session.Fsync(false)
+	//if error != nil {
+	//	return nil, error
+	//}
+
 	error = collection.DropCollection()
 
 	if error != nil {
@@ -147,28 +152,15 @@ func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
 	session := adminService.session
 	database := session.DB(adminService.authSource)
 
-	// TODO: ??? Not sure if it's correct
-	//roles := []bson.DocElem{{"role", "dbOwner"}, {"db", databaseName}}
 	roles := []interface{}{map[string]string{"role": "dbOwner", "db": databaseName}}
 	cmd := &bson.D{{"grantRolesToUser", adminService.username}, {"roles", roles}}
 
-	//cmd := map[string]interface{}{
-	//	"grantRolesToUser": adminService.username,
-	//	"roles": []interface{}{
-	//		map[string]string{
-	//			"role": "dbOwner",
-	//			"db":   databaseName,
-	//		},
-	//	},
-	//}
-
 	result := &bson.D{}
-	fmt.Println("+++++++++++++")
 
 	error := database.Run(cmd, result)
 
-	fmt.Print("===========================")
-	fmt.Println(result.Map())
+	//fmt.Print("===========================")
+	//fmt.Println(result.Map())
 
 	if error != nil {
 		return error
@@ -185,24 +177,6 @@ func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
 		return errors.New(string(jsonStr))
 	}
 
-	//user := &mgo.User{
-	//	Username: adminService.username,
-	//	//Roles: []mgo.Role{
-	//	//	"dbOwner",
-	//	//},
-	//	OtherDBRoles: map[string][]mgo.Role{
-	//		databaseName:                           {"dbOwner"},
-	//		"a0c320a8-4108-4f6d-9a59-b91193a6073c": {"dbOwner"},
-	//		"admin": {"root"},
-	//	},
-	//}
-	//
-	//error := database.UpsertUser(user)
-	//
-	//if error != nil {
-	//	return error
-	//}
-
 	return nil
 }
 
@@ -210,8 +184,7 @@ func (adminService *AdminService) CreateUser(databaseName, username, password st
 	session := adminService.session
 	database := session.DB(databaseName)
 
-	// TODO: ??? Not sure if it's correct
-	roles := []bson.DocElem{{"role", "readWrite"}, {"db", databaseName}}
+	roles := []interface{}{map[string]string{"role": "readWrite", "db": databaseName}}
 	cmd := &bson.D{{"createUser", username}, {"pwd", password}, {"roles", roles}}
 
 	result := &bson.D{}
@@ -275,22 +248,6 @@ func (adminService *AdminService) GetServerAddresses() string {
 }
 
 func (adminService *AdminService) SaveDoc(doc interface{}, databaseName string, collectionName string) error {
-	//databaseExists, error := adminService.DatabaseExists(databaseName)
-	//
-	//var database *mgo.Database
-	//
-	//if error != nil {
-	//	return error
-	//}
-	//
-	//if !databaseExists {
-	//	database, error = adminService.CreateDatabase(databaseName)
-	//
-	//	if error != nil {
-	//		return error
-	//	}
-	//}
-
 	session := adminService.session
 
 	database := session.DB(databaseName)
@@ -310,18 +267,6 @@ func (adminService *AdminService) SaveDoc(doc interface{}, databaseName string, 
 }
 
 func (adminService *AdminService) RemoveDoc(selector interface{}, databaseName string, collectionName string) error {
-	//databaseExists, error := adminService.DatabaseExists(databaseName)
-	//
-	//var database *mgo.Database
-	//
-	//if error != nil {
-	//	return error
-	//}
-	//
-	//if !databaseExists {
-	//	return errors.New("Database not exists")
-	//}
-
 	session := adminService.session
 
 	database := session.DB(databaseName)
@@ -344,11 +289,14 @@ func (adminService *AdminService) DocExists(query *bson.M, databaseName string, 
 	result := &bson.D{}
 	error := collection.Find(query).One(result)
 
-	if error != nil {
+	//fmt.Println("================")
+	//fmt.Println(result.Map())
+
+	if error != nil && error != mgo.ErrNotFound {
 		return false, error
 	}
 
-	return result != nil, nil
+	return len(result.Map()) > 0, nil
 }
 
 func splitHosts(hosts string, defaultPort string) ([]string, error) {
