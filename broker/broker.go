@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/pivotal-cf/brokerapi"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type InstanceCredentials struct {
@@ -20,7 +21,7 @@ type InstanceCreator interface {
 }
 
 type InstanceBinder interface {
-	Bind(instanceID string, bindingID string, details brokerapi.BindDetails) error
+	Bind(instanceID string, bindingID string, details brokerapi.BindDetails) (bson.M, error)
 	Unbind(instanceID string, bindingID string, details brokerapi.UnbindDetails) error
 	InstanceBindingExists(instanceID, bindingID string) (bool, error)
 }
@@ -122,7 +123,8 @@ func (mongoServiceBroker *MongoServiceBroker) Bind(context context.Context, inst
 				return binding, errors.New("instance binder not found for plan")
 			}
 
-			error := instanceBinder.Bind(instanceID, bindingID, details)
+			credentials, error := instanceBinder.Bind(instanceID, bindingID, details)
+			binding.Credentials = credentials
 			return binding, error
 		}
 	}
