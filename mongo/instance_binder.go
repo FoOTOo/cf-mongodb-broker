@@ -60,7 +60,7 @@ func (instanceBinder *InstanceBinder) Unbind(instanceID string, bindingID string
 		return error
 	}
 
-	if instanceBindingExists {
+	if !instanceBindingExists {
 		return instanceBindingDoesNotExistError(instanceID, bindingID, details)
 	}
 
