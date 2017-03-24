@@ -147,23 +147,61 @@ func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
 	session := adminService.session
 	database := session.DB(adminService.authSource)
 
-	user := &mgo.User{
-		Username: adminService.username,
-		//Roles: []mgo.Role{
-		//	"dbOwner",
-		//},
-		OtherDBRoles: map[string][]mgo.Role{
-			databaseName:                           {"dbOwner"},
-			"a0c320a8-4108-4f6d-9a59-b91193a6073c": {"dbOwner"},
-			"admin": {"root"},
-		},
-	}
+	// TODO: ??? Not sure if it's correct
+	//roles := []bson.DocElem{{"role", "dbOwner"}, {"db", databaseName}}
+	roles := []interface{}{map[string]string{"role": "dbOwner", "db": databaseName}}
+	cmd := &bson.D{{"grantRolesToUser", adminService.username}, {"roles", roles}}
 
-	error := database.UpsertUser(user)
+	//cmd := map[string]interface{}{
+	//	"grantRolesToUser": adminService.username,
+	//	"roles": []interface{}{
+	//		map[string]string{
+	//			"role": "dbOwner",
+	//			"db":   databaseName,
+	//		},
+	//	},
+	//}
+
+	result := &bson.D{}
+	fmt.Println("+++++++++++++")
+
+	error := database.Run(cmd, result)
+
+	fmt.Print("===========================")
+	fmt.Println(result.Map())
 
 	if error != nil {
 		return error
 	}
+
+	ok := result.Map()["ok"]
+
+	if ok != 1.0 {
+		jsonStr, error := json.MarshalIndent(result.Map(), "", "  ")
+		if error != nil {
+			return error
+		}
+
+		return errors.New(string(jsonStr))
+	}
+
+	//user := &mgo.User{
+	//	Username: adminService.username,
+	//	//Roles: []mgo.Role{
+	//	//	"dbOwner",
+	//	//},
+	//	OtherDBRoles: map[string][]mgo.Role{
+	//		databaseName:                           {"dbOwner"},
+	//		"a0c320a8-4108-4f6d-9a59-b91193a6073c": {"dbOwner"},
+	//		"admin": {"root"},
+	//	},
+	//}
+	//
+	//error := database.UpsertUser(user)
+	//
+	//if error != nil {
+	//	return error
+	//}
 
 	return nil
 }
