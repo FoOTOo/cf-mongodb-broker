@@ -105,7 +105,7 @@ func (mongoServiceBroker *MongoServiceBroker) Deprovision(context context.Contex
 		}
 	}
 
-	return spec, nil
+	return spec, brokerapi.ErrInstanceDoesNotExist
 }
 
 func (mongoServiceBroker *MongoServiceBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {

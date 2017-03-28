@@ -1,8 +1,6 @@
 package mongo
 
 import (
-	"errors"
-
 	"github.com/FoOTOo/mongo-service-broker-golang-ultragtx/utils"
 	"github.com/pivotal-cf/brokerapi"
 	"gopkg.in/mgo.v2/bson"
@@ -23,21 +21,12 @@ func NewInstanceBinder(adminService *AdminService, repository *Repository) *Inst
 func (instanceBinder *InstanceBinder) Bind(instanceID string, bindingID string, details brokerapi.BindDetails) (credentials bson.M, error error) {
 	// TODO: ATOM
 	credentials = bson.M{}
-	instanceBindingExists, error := instanceBinder.repository.InstanceBindingExists(instanceID, bindingID)
-
-	if error != nil {
-		return credentials, error
-	}
-
-	if instanceBindingExists {
-		return credentials, instanceBindingExistsError(instanceID, bindingID, details)
-	}
-
-	// TODO check if user already exists in the DB
 
 	databaseName := instanceID
 	username := bindingID
 	password := utiils.GenerateRandomString(25)
+
+	// TODO check if user already exists in the DB
 
 	error = instanceBinder.adminService.CreateUser(databaseName, username, password)
 
@@ -58,19 +47,9 @@ func (instanceBinder *InstanceBinder) Bind(instanceID string, bindingID string, 
 
 func (instanceBinder *InstanceBinder) Unbind(instanceID string, bindingID string, details brokerapi.UnbindDetails) error {
 	// TODO: ATOM
-	instanceBindingExists, error := instanceBinder.repository.InstanceBindingExists(instanceID, bindingID)
-
-	if error != nil {
-		return error
-	}
-
-	if !instanceBindingExists {
-		return instanceBindingDoesNotExistError(instanceID, bindingID, details)
-	}
-
 	databaseName := instanceID
 	username := bindingID
-	error = instanceBinder.adminService.DeleteUser(databaseName, username)
+	error := instanceBinder.adminService.DeleteUser(databaseName, username)
 
 	if error != nil {
 		return error
@@ -88,12 +67,4 @@ func (instanceBinder *InstanceBinder) Unbind(instanceID string, bindingID string
 func (instanceBinder *InstanceBinder) InstanceBindingExists(instanceID string, bindingID string) (bool, error) {
 	instanceBindingExists, error := instanceBinder.repository.InstanceBindingExists(instanceID, bindingID)
 	return instanceBindingExists, error
-}
-
-func instanceBindingExistsError(instanceID, bindingID string, details brokerapi.BindDetails) error {
-	return errors.New("Instance binding exists, incetanceID: " + instanceID + ", bindingID: " + bindingID)
-}
-
-func instanceBindingDoesNotExistError(instanceID, bindingID string, details brokerapi.UnbindDetails) error {
-	return errors.New("Instance binding doesn't exist, incetanceID: " + instanceID + ", bindingID: " + bindingID)
 }
