@@ -21,6 +21,11 @@ type ServiceInstance struct {
 	DashboardUrl        string `bson:"dashboardUrl,omitempty"`
 }
 
+type ServiceInstanceUpdate struct {
+	ServiceDefinitionID string `bson:"serviceDefinitionID"`
+	PlanID              string `bson:"planID"`
+}
+
 type ServiceInstanceBinding struct {
 	BindingID         string `bson:"_id"`
 	ServiceInstanceID string `bson:"serviceInstanceID"`
@@ -65,6 +70,21 @@ func (repository *Repository) SaveInstance(instanceID string, details brokerapi.
 
 func (repository *Repository) DeleteInstance(instanceID string, details brokerapi.DeprovisionDetails) error {
 	error := repository.adminService.RemoveDoc(&bson.M{ID: instanceID}, DatabaseName, ServiceInstanceCollectionName)
+
+	if error != nil {
+		return error
+	}
+
+	return nil
+}
+
+func (repository *Repository) UpdateInstance(instanceID string, details brokerapi.UpdateDetails) error {
+	update := &ServiceInstanceUpdate{
+		ServiceDefinitionID: details.ServiceID,
+		PlanID:              details.PlanID,
+	}
+
+	error := repository.adminService.UpdateDoc(&bson.M{ID: instanceID}, update, DatabaseName, ServiceInstanceCollectionName)
 
 	if error != nil {
 		return error

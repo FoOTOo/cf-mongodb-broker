@@ -10,7 +10,9 @@ const (
 	InstanceID1       = "InstanceID1"
 	BindingID1        = "BindingID1"
 	ServiceID1        = "ServiceID1"
+	ServiceID2        = "ServiceID2"
 	PlanID1           = "PlanID1"
+	PlanID2           = "PlanID2"
 	OrganizationGUID1 = "OrganizationGUID1"
 	SpaceGUID1        = "SpaceGUID1"
 	AppGUID1          = "AppGUID1"
@@ -60,6 +62,19 @@ func TestRepository(t *testing.T) {
 
 	if !instanceExists {
 		t.Fatal("Instance should exist")
+	}
+
+	//-------------------------
+	t.Log("Update instance binding")
+	updateDetails := brokerapi.UpdateDetails{
+		ServiceID: ServiceID2,
+		PlanID:    PlanID2,
+	}
+
+	error = repository.UpdateInstance(InstanceID1, updateDetails)
+
+	if error != nil {
+		t.Fatal("Error: ", error)
 	}
 
 	//-------------------------

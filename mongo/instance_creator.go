@@ -27,7 +27,7 @@ func (instanceCreator *InstanceCreator) Create(instanceID string, details broker
 	}
 
 	if instanceExists {
-		return instanceExistsError(instanceID, details)
+		return errors.New("Instance exists, incetanceID: " + instanceID + ", serviceID: " + details.ServiceID)
 	}
 
 	databaseExists, error := instanceCreator.adminService.DatabaseExists(instanceID)
@@ -73,7 +73,7 @@ func (instanceCreator *InstanceCreator) Destroy(instanceID string, details broke
 	}
 
 	if !instanceExists {
-		return instanceDoesNotExistError(instanceID, details)
+		return errors.New("Instance doesn't exist, incetanceID: " + instanceID + ", serviceID: " + details.ServiceID)
 	}
 
 	error = instanceCreator.adminService.DeleteDatabase(instanceID)
@@ -96,10 +96,22 @@ func (instanceCreator *InstanceCreator) InstanceExists(instanceID string) (bool,
 	return instanceExists, error
 }
 
-func instanceExistsError(instanceID string, details brokerapi.ProvisionDetails) error {
-	return errors.New("Instance exists, incetanceID: " + instanceID + ", serviceID: " + details.ServiceID)
-}
+func (instanceCreator *InstanceCreator) Update(instanceID string, details brokerapi.UpdateDetails) error {
+	instanceExists, error := instanceCreator.repository.InstanceExists(instanceID)
 
-func instanceDoesNotExistError(instanceID string, details brokerapi.DeprovisionDetails) error {
-	return errors.New("Instance doesn't exist, incetanceID: " + instanceID + ", serviceID: " + details.ServiceID)
+	if error != nil {
+		return error
+	}
+
+	if !instanceExists {
+		return errors.New("Instance doesn't exist, incetanceID: " + instanceID + ", serviceID: " + details.ServiceID)
+	}
+
+	error = instanceCreator.repository.UpdateInstance(instanceID, details)
+
+	if error != nil {
+		return error
+	}
+
+	return nil
 }

@@ -17,6 +17,7 @@ type InstanceCredentials struct {
 type InstanceCreator interface {
 	Create(instanceID string, serviceDetails brokerapi.ProvisionDetails) error
 	Destroy(instanceID string, details brokerapi.DeprovisionDetails) error
+	Update(instanceID string, details brokerapi.UpdateDetails) error
 	InstanceExists(instanceID string) (bool, error)
 }
 
@@ -57,16 +58,16 @@ func (mongoServiceBroker *MongoServiceBroker) Services(context context.Context) 
 	return services
 }
 
-func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context, instanceID string, serviceDetails brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
+func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	spec := brokerapi.ProvisionedServiceSpec{}
 
-	if serviceDetails.PlanID == "" {
+	if details.PlanID == "" {
 		return spec, errors.New("plan_id required")
 	}
 
 	planIdentifier := ""
 	for key, plan := range mongoServiceBroker.plans() {
-		if plan.ID == serviceDetails.PlanID {
+		if plan.ID == details.PlanID {
 			planIdentifier = key
 			break
 		}
@@ -81,7 +82,7 @@ func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context,
 		return spec, errors.New("instance creator not found for plan")
 	}
 
-	error := instanceCreator.Create(instanceID, serviceDetails)
+	error := instanceCreator.Create(instanceID, details)
 	if error != nil {
 		return spec, error
 	}
@@ -102,6 +103,38 @@ func (mongoServiceBroker *MongoServiceBroker) Deprovision(context context.Contex
 		if instanceExists {
 			return spec, instanceCreator.Destroy(instanceID, details)
 		}
+	}
+
+	return spec, nil
+}
+
+func (mongoServiceBroker *MongoServiceBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
+	spec := brokerapi.UpdateServiceSpec{}
+
+	if details.PlanID == "" {
+		return spec, errors.New("plan_id required")
+	}
+
+	planIdentifier := ""
+	for key, plan := range mongoServiceBroker.plans() {
+		if plan.ID == details.PlanID {
+			planIdentifier = key
+			break
+		}
+	}
+
+	if planIdentifier == "" {
+		return spec, errors.New("plan_id not recognized")
+	}
+
+	instanceCreator, ok := mongoServiceBroker.InstanceCreators[planIdentifier]
+	if !ok {
+		return spec, errors.New("instance creator not found for plan")
+	}
+
+	error := instanceCreator.Update(instanceID, details)
+	if error != nil {
+		return spec, error
 	}
 
 	return spec, nil
@@ -181,8 +214,4 @@ func (mongoServiceBroker *MongoServiceBroker) plans() map[string]*brokerapi.Serv
 // for the status of the provisioning operation.
 func (mongoServiceBroker *MongoServiceBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
 	return brokerapi.LastOperation{}, nil
-}
-
-func (mongoServiceBroker *MongoServiceBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
-	return brokerapi.UpdateServiceSpec{}, nil
 }

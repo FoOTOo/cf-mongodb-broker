@@ -314,3 +314,34 @@ func splitHosts(hosts string, defaultPort string) ([]string, error) {
 
 	return addresses, nil
 }
+
+func (adminService *AdminService) UpdateDoc(selector interface{}, update interface{}, databaseName string, collectionName string) error {
+	session := adminService.session
+
+	database := session.DB(databaseName)
+	collection := database.C(collectionName)
+	_, error := collection.Upsert(selector, update)
+
+	if error != nil {
+		return error
+	}
+
+	return nil
+}
+
+func (adminService *AdminService) GetOneDoc(query *bson.M, databaseName string, collectionName string) (bson.M, error) {
+	session := adminService.session
+	database := session.DB(databaseName)
+	collection := database.C(collectionName)
+
+	result := &bson.D{}
+	error := collection.Find(query).One(result)
+
+	if error == mgo.ErrNotFound {
+		return nil, nil
+	} else if error != nil {
+		return nil, error
+	}
+
+	return result.Map(), nil
+}

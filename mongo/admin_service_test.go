@@ -25,7 +25,7 @@ const (
 func TestAdminService(t *testing.T) {
 	//-------------------------
 	t.Log("Creating admin service")
-	adminService, error := NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin") // TODO: change
+	adminService, error := NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin")
 
 	if error != nil {
 		t.Fatal("Error: ", error)
@@ -78,6 +78,27 @@ func TestAdminService(t *testing.T) {
 
 	if !docExists {
 		t.Fatal("Doc should exists")
+	}
+
+	//-------------------------
+	t.Log("Update Doc")
+	update := map[string]string{"v": "789"}
+	error = adminService.UpdateDoc(query, update, DB1, Collection1)
+	if error != nil {
+		t.Fatal("Error: ", error)
+	}
+
+	result, error := adminService.GetOneDoc(query, DB1, Collection1)
+	if error != nil {
+		t.Fatal("Error: ", error)
+	}
+
+	if result == nil {
+		t.Fatal("Updated doc should exist")
+	}
+
+	if result["v"] != "789" {
+		t.Fatal("Doc no updated correctly", result)
 	}
 
 	//-------------------------
