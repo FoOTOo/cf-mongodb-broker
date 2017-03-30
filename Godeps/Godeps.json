@@ -1,11 +1,15 @@
 {
-	"ImportPath": "github.com/FoOTOo/mongo-service-broker-golang-ultragtx",
+	"ImportPath": "github.com/FoOTOo/cf-mongodb-broker",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Deps": [
 		{
 			"ImportPath": "code.cloudfoundry.org/lager",
 			"Rev": "de8e9c6c6e474e5e3668aea1a9817bdb4ceeceb0"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
+			"Rev": "cff29b469e0f490ab8c169b6a2c237543f46a1de"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",

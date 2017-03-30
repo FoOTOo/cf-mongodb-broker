@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/FoOTOo/cf-mongodb-broker/config"
 	"github.com/pivotal-cf/brokerapi"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -30,32 +31,11 @@ type InstanceBinder interface {
 type MongoServiceBroker struct {
 	InstanceCreators map[string]InstanceCreator
 	InstanceBinders  map[string]InstanceBinder
+	Config           config.Config
 }
 
 func (mongoServiceBroker *MongoServiceBroker) Services(context context.Context) []brokerapi.Service {
-	// TODO: read config
-
-	planList := []brokerapi.ServicePlan{}
-	for _, plan := range mongoServiceBroker.plans() {
-		planList = append(planList, *plan)
-	}
-
-	services := []brokerapi.Service{
-		brokerapi.Service{
-			ID:            "SOME-UUID-98769-mongodb-service", // TODO: better uuid
-			Name:          "footoo-mongodb",
-			Description:   "A in development mongodb service",
-			Bindable:      true,
-			Tags:          []string{"FoOTOo", "mongodb"},
-			PlanUpdatable: false,
-			Plans:         planList,
-			//Requires
-			//Metadata
-			//DashboardClient
-		},
-	}
-
-	return services
+	return mongoServiceBroker.Config.Services()
 }
 
 func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
@@ -183,20 +163,7 @@ func (mongoServiceBroker *MongoServiceBroker) Unbind(context context.Context, in
 }
 
 func (mongoServiceBroker *MongoServiceBroker) plans() map[string]*brokerapi.ServicePlan {
-	plans := map[string]*brokerapi.ServicePlan{}
-
-	free := true
-
-	plans["standard"] = &brokerapi.ServicePlan{
-		ID:          "SOME-UUID-98769-standard", // TODO: better uuid
-		Name:        "standard",
-		Description: "Standard mongodb plan",
-		Free:        &free,
-		//Bindable:
-		//Metadata:
-	}
-
-	return plans
+	return mongoServiceBroker.Config.Plans()
 }
 
 //func (mongoServiceBroker *MongoServiceBroker) instanceExists(instanceID string) bool {

@@ -11,8 +11,6 @@ import (
 
 	"os"
 
-	"fmt"
-
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -194,8 +192,8 @@ func (adminService *AdminService) CreateUser(databaseName, username, password st
 		return error
 	}
 
-	fmt.Print("====== ")
-	fmt.Println(result)
+	//fmt.Print("====== ")
+	//fmt.Println(result)
 
 	ok := result.Map()["ok"]
 

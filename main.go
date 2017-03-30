@@ -4,17 +4,16 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/FoOTOo/mongo-service-broker-golang-ultragtx/broker"
+	"github.com/FoOTOo/cf-mongodb-broker/broker"
+	"github.com/FoOTOo/cf-mongodb-broker/config"
 	"github.com/pivotal-cf/brokerapi"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/FoOTOo/mongo-service-broker-golang-ultragtx/mongo"
+	"github.com/FoOTOo/cf-mongodb-broker/mongo"
 )
 
 const (
-	BrokerName     = "mongodb-broker"
-	BrokerUsername = "mongodb-broker-user"
-	BrokerPassword = "mongodb-broker-password"
+	BrokerName = "cf-mongodb-broker"
 )
 
 func main() {
@@ -25,9 +24,17 @@ func main() {
 
 	brokerLogger.Info("Starting Mongodb broker")
 
-	// TODO: config file
+	// Config
+	brokerConfigPath := configPath()
+	config, err := config.ParseConfig(brokerConfigPath)
+	if err != nil {
+		brokerLogger.Fatal("Loading config file", err, lager.Data{
+			"broker-config-path": brokerConfigPath,
+		})
+	}
 
-	adminService, error := mongo.NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin") // TODO: change
+	//adminService, error := mongo.NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin")
+	adminService, error := mongo.NewAdminService(config.MongoHosts(), config.MongoUsername(), config.MongoPassword(), "admin")
 
 	if error != nil {
 		brokerLogger.Fatal("mongo-admin-service", error)
@@ -46,11 +53,12 @@ func main() {
 		InstanceBinders: map[string]broker.InstanceBinder{
 			"standard": instanceBinder,
 		},
+		Config: config,
 	}
 
 	brokerCredentials := brokerapi.BrokerCredentials{
-		Username: BrokerUsername,
-		Password: BrokerPassword,
+		Username: config.BrokerConfig.BrokerUsername,
+		Password: config.BrokerConfig.BrokerPassword,
 	}
 
 	// broker
@@ -61,5 +69,13 @@ func main() {
 
 	http.Handle("/", brokerAPI)
 
-	brokerLogger.Fatal("http-listen", http.ListenAndServe(":"+"9876", nil)) // TODO: config
+	brokerLogger.Fatal("http-listen", http.ListenAndServe(":"+"80", nil)) // TODO: ???Listening on host in config
+}
+
+func configPath() string {
+	brokerConfigYamlPath := os.Getenv("BROKER_CONFIG_PATH")
+	if brokerConfigYamlPath == "" {
+		panic("BROKER_CONFIG_PATH not set")
+	}
+	return brokerConfigYamlPath
 }

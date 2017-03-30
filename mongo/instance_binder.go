@@ -1,7 +1,7 @@
 package mongo
 
 import (
-	"github.com/FoOTOo/mongo-service-broker-golang-ultragtx/utils"
+	"github.com/FoOTOo/cf-mongodb-broker/utils"
 	"github.com/pivotal-cf/brokerapi"
 	"gopkg.in/mgo.v2/bson"
 )

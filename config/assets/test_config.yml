@@ -1,0 +1,55 @@
+---
+broker:
+  bindable: true
+  dashboard_client: null
+  description: MongoDB
+  host: https://p-mongodb-broker.cftesting.footoo.org
+  id: SOME-UUID-98769-f-mongodb-broker #
+  metadata:
+    displayName: MongoDB
+    documentationUrl: null
+    imageUrl: http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png
+    longDescription: Creating a service instance provisions a database. Binding
+      applications provisions unique credentials for each application to access
+      the database.
+    providerDisplayName: fcf
+    supportUrl: null
+  name: f-mongodb #
+  plan_updateable: false
+  plans:
+  - description: Shared MongoDB Server
+    free: true
+    id: mongo
+    metadata:
+      bullets:
+      - Shared MongoDB(3.4.2) replica set
+      costs:
+      - amount:
+          usd: 0
+        unit: month
+    name: standard
+  requires: null
+  security_user_name: broker-username
+  security_user_password: broker-password
+  tags:
+  - mongodb
+
+mongod:
+  nodes:
+    bind_ip: 0.0.0.0
+    ips:
+    - 172.16.0.156
+    port: 27017
+  path:
+    log: /var/vcap/sys/log/mongod/mongod.log
+  replSet:
+    enabled: true
+    key: replicasetkey
+    name: replicasetname
+  root:
+    pass: rootpassword
+    user: rootusername
+  storage:
+    engine: wiredTiger
+    journal: true
+    path: /var/vcap/store/mongod
