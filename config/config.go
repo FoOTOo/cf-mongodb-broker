@@ -5,6 +5,8 @@ import (
 
 	"strings"
 
+	"fmt"
+
 	"github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/pivotal-cf/brokerapi"
 )
@@ -46,11 +48,12 @@ type BrokerConfig struct {
 
 type ServiceMetadata struct {
 	DisplayName         string `yaml:"displayName"`
-	ImageUrl            string `yaml:"imageUrl"`
+	IconImage           string `yaml:"iconImage"`
 	LongDescription     string `yaml:"longDescription"`
 	ProviderDisplayName string `yaml:"providerDisplayName"`
 	DocumentationUrl    string `yaml:"documentationUrl"`
 	SupportUrl          string `yaml:"supportUrl"`
+	//ImageUrl            string `yaml:"imageUrl"`
 }
 
 type Plan struct {
@@ -120,8 +123,9 @@ func (config *Config) Services() []brokerapi.Service {
 			Plans:         planList,
 			PlanUpdatable: brokerConfig.PlanUpdateable,
 			Metadata: &brokerapi.ServiceMetadata{
-				DisplayName:         serviceMetadata.DisplayName,
-				ImageUrl:            serviceMetadata.ImageUrl,
+				DisplayName: serviceMetadata.DisplayName,
+				//ImageUrl:            serviceMetadata.ImageUrl,
+				ImageUrl:            fmt.Sprintf("data:image/png;base64,%s", serviceMetadata.IconImage),
 				LongDescription:     serviceMetadata.LongDescription,
 				ProviderDisplayName: serviceMetadata.ProviderDisplayName,
 				DocumentationUrl:    serviceMetadata.DocumentationUrl,
