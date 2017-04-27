@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -29,6 +30,10 @@ func TestConfig(t *testing.T) {
 	fmt.Printf("%+v\n", config.Plans())
 	//
 	//j, _ = json.MarshalIndent(config.Services(), "", "  ")
+	//fmt.Println("Raw Service ----------------")
+	//fmt.Printf("%+v\n", config.Services())
+
+	j, _ := json.MarshalIndent(config.Services(), "", "  ")
 	fmt.Println("Raw Service ----------------")
-	fmt.Printf("%+v\n", config.Services())
+	fmt.Printf("%+s\n", j)
 }

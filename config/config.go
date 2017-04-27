@@ -65,11 +65,14 @@ type Plan struct {
 }
 
 type PlanMetadata struct {
-	Bullets []string           `yaml:"bullets"`
-	Costs   []PlanMetadataCost `yaml:"costs"`
+	DisplayName string             `yaml:"displayName,omitempty"`
+	Bullets     []string           `yaml:"bullets,omitempty"`
+	Costs       []PlanMetadataCost `yaml:"costs,omitempty"`
 }
 
 type PlanMetadataCost struct {
+	Amount map[string]float64 `yaml:"amount"`
+	Unit   string             `yaml:"unit"`
 }
 
 func ParseConfig(path string) (Config, error) {
@@ -148,9 +151,26 @@ func (config *Config) Plans() map[string]*brokerapi.ServicePlan {
 			Name:        plan.Name,
 			Description: plan.Description,
 			Free:        &plan.Free,
-			// Metadata
+			Metadata: &brokerapi.ServicePlanMetadata{
+				DisplayName: plan.Metadata.DisplayName,
+				Bullets:     plan.Metadata.Bullets,
+				Costs:       planCosts(plan),
+			},
 		}
 	}
 
 	return plans
+}
+
+func planCosts(plan Plan) []brokerapi.ServicePlanCost {
+	costs := []brokerapi.ServicePlanCost{}
+
+	for _, cost := range plan.Metadata.Costs {
+		costs = append(costs, brokerapi.ServicePlanCost{
+			Amount: cost.Amount,
+			Unit:   cost.Unit,
+		})
+	}
+
+	return costs
 }

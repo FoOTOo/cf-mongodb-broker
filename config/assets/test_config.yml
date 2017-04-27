@@ -22,6 +22,7 @@ broker:
     free: true
     id: mongo
     metadata:
+      displayName: standard
       bullets:
       - Shared MongoDB(3.4.2) replica set
       costs:
