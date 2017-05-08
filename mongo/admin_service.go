@@ -27,7 +27,7 @@ type AdminService struct {
 
 	addresses []string
 
-	session *mgo.Session
+	dialInfo *mgo.DialInfo
 }
 
 func NewAdminService(hosts, username, password, authSource string) (*AdminService, error) {
@@ -54,28 +54,32 @@ func NewAdminService(hosts, username, password, authSource string) (*AdminServic
 		Password:  password,
 	}
 
-	session, error := mgo.DialWithInfo(dialInfo)
-
-	if error != nil {
-		return nil, error
-	}
-
 	adminService := &AdminService{
 		hosts:      hosts,
 		username:   username,
 		password:   password,
 		authSource: authSource,
 		addresses:  addresses,
-		session:    session,
+		dialInfo:   dialInfo,
 	}
 
 	return adminService, nil
 }
 
+func (adminService *AdminService) newSession() (*mgo.Session, error) {
+	session, error := mgo.DialWithInfo(adminService.dialInfo)
+
+	return session, error
+}
+
 func (adminService *AdminService) DatabaseExists(databaseName string) (bool, error) {
-	//session := adminService.session.Copy()
-	//defer session.Close()
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return false, error
+	}
+
+	defer session.Close()
 
 	databaseNames, error := session.DatabaseNames()
 
@@ -93,7 +97,14 @@ func (adminService *AdminService) DatabaseExists(databaseName string) (bool, err
 }
 
 func (adminService *AdminService) DeleteDatabase(databaseName string) error {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return error
+	}
+
+	defer session.Close()
+
 	database := session.DB(databaseName)
 
 	if database.Name != databaseName {
@@ -102,7 +113,7 @@ func (adminService *AdminService) DeleteDatabase(databaseName string) error {
 
 	// TODO: Remove db owner role
 
-	error := database.DropDatabase()
+	error = database.DropDatabase()
 
 	if error != nil {
 		return error
@@ -112,13 +123,20 @@ func (adminService *AdminService) DeleteDatabase(databaseName string) error {
 }
 
 func (adminService *AdminService) CreateDatabase(databaseName string) (*mgo.Database, error) {
-	error := adminService.addDBOwnerRole(databaseName)
+	session, error := adminService.newSession()
 
 	if error != nil {
 		return nil, error
 	}
 
-	session := adminService.session
+	defer session.Close()
+
+	error = adminService.addDBOwnerRole(session, databaseName)
+
+	if error != nil {
+		return nil, error
+	}
+
 	database := session.DB(databaseName)
 	collection := database.C("foo")
 	error = collection.Insert(&bson.DocElem{"foo", "bar"})
@@ -146,8 +164,7 @@ func (adminService *AdminService) CreateDatabase(databaseName string) (*mgo.Data
 	return database, nil
 }
 
-func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
-	session := adminService.session
+func (adminService *AdminService) addDBOwnerRole(session *mgo.Session, databaseName string) error {
 	database := session.DB(adminService.authSource)
 
 	roles := []interface{}{map[string]string{"role": "dbOwner", "db": databaseName}}
@@ -179,14 +196,21 @@ func (adminService *AdminService) addDBOwnerRole(databaseName string) error {
 }
 
 func (adminService *AdminService) CreateUser(databaseName, username, password string) error {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return error
+	}
+
+	defer session.Close()
+
 	database := session.DB(databaseName)
 
 	roles := []interface{}{map[string]string{"role": "readWrite", "db": databaseName}}
 	cmd := &bson.D{{"createUser", username}, {"pwd", password}, {"roles", roles}}
 
 	result := &bson.D{}
-	error := database.Run(cmd, result)
+	error = database.Run(cmd, result)
 
 	if error != nil {
 		return error
@@ -210,13 +234,20 @@ func (adminService *AdminService) CreateUser(databaseName, username, password st
 }
 
 func (adminService *AdminService) DeleteUser(databaseName, username string) error {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return error
+	}
+
+	defer session.Close()
+
 	database := session.DB(databaseName)
 
 	cmd := &bson.D{{"dropUser", username}}
 
 	result := &bson.D{}
-	error := database.Run(cmd, result)
+	error = database.Run(cmd, result)
 
 	if error != nil {
 		return error
@@ -246,11 +277,17 @@ func (adminService *AdminService) GetServerAddresses() string {
 }
 
 func (adminService *AdminService) SaveDoc(doc interface{}, databaseName string, collectionName string) error {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return error
+	}
+
+	defer session.Close()
 
 	database := session.DB(databaseName)
 	collection := database.C(collectionName)
-	error := collection.Insert(doc)
+	error = collection.Insert(doc)
 
 	if error != nil {
 		return error
@@ -265,12 +302,18 @@ func (adminService *AdminService) SaveDoc(doc interface{}, databaseName string, 
 }
 
 func (adminService *AdminService) RemoveDoc(selector interface{}, databaseName string, collectionName string) error {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return error
+	}
+
+	defer session.Close()
 
 	database := session.DB(databaseName)
 	collection := database.C(collectionName)
 
-	error := collection.Remove(selector)
+	error = collection.Remove(selector)
 
 	if error != nil {
 		return error
@@ -280,12 +323,19 @@ func (adminService *AdminService) RemoveDoc(selector interface{}, databaseName s
 }
 
 func (adminService *AdminService) DocExists(query *bson.M, databaseName string, collectionName string) (bool, error) {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return false, error
+	}
+
+	defer session.Close()
+
 	database := session.DB(databaseName)
 	collection := database.C(collectionName)
 
 	result := &bson.D{}
-	error := collection.Find(query).One(result)
+	error = collection.Find(query).One(result)
 
 	//fmt.Println("================")
 	//fmt.Println(result.Map())
@@ -314,11 +364,17 @@ func splitHosts(hosts string, defaultPort string) ([]string, error) {
 }
 
 func (adminService *AdminService) UpdateDoc(selector interface{}, update interface{}, databaseName string, collectionName string) error {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return error
+	}
+
+	defer session.Close()
 
 	database := session.DB(databaseName)
 	collection := database.C(collectionName)
-	_, error := collection.Upsert(selector, update)
+	_, error = collection.Upsert(selector, update)
 
 	if error != nil {
 		return error
@@ -328,12 +384,19 @@ func (adminService *AdminService) UpdateDoc(selector interface{}, update interfa
 }
 
 func (adminService *AdminService) GetOneDoc(query *bson.M, databaseName string, collectionName string) (bson.M, error) {
-	session := adminService.session
+	session, error := adminService.newSession()
+
+	if error != nil {
+		return nil, error
+	}
+
+	defer session.Close()
+
 	database := session.DB(databaseName)
 	collection := database.C(collectionName)
 
 	result := &bson.D{}
-	error := collection.Find(query).One(result)
+	error = collection.Find(query).One(result)
 
 	if error == mgo.ErrNotFound {
 		return nil, nil
