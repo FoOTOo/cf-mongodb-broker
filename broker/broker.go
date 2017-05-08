@@ -62,9 +62,9 @@ func (mongoServiceBroker *MongoServiceBroker) Provision(context context.Context,
 		return spec, errors.New("instance creator not found for plan")
 	}
 
-	error := instanceCreator.Create(instanceID, details)
-	if error != nil {
-		return spec, error
+	err := instanceCreator.Create(instanceID, details)
+	if err != nil {
+		return spec, err
 	}
 
 	return spec, nil
@@ -74,10 +74,10 @@ func (mongoServiceBroker *MongoServiceBroker) Deprovision(context context.Contex
 	spec := brokerapi.DeprovisionServiceSpec{}
 
 	for _, instanceCreator := range mongoServiceBroker.InstanceCreators {
-		instanceExists, error := instanceCreator.InstanceExists(instanceID)
+		instanceExists, err := instanceCreator.InstanceExists(instanceID)
 
-		if error != nil {
-			return spec, error
+		if err != nil {
+			return spec, err
 		}
 
 		if instanceExists {
@@ -112,9 +112,9 @@ func (mongoServiceBroker *MongoServiceBroker) Update(context context.Context, in
 		return spec, errors.New("instance creator not found for plan")
 	}
 
-	error := instanceCreator.Update(instanceID, details)
-	if error != nil {
-		return spec, error
+	err := instanceCreator.Update(instanceID, details)
+	if err != nil {
+		return spec, err
 	}
 
 	return spec, nil
@@ -124,10 +124,10 @@ func (mongoServiceBroker *MongoServiceBroker) Bind(context context.Context, inst
 	binding := brokerapi.Binding{}
 
 	for key, instanceCreator := range mongoServiceBroker.InstanceCreators {
-		instanceExists, error := instanceCreator.InstanceExists(instanceID)
+		instanceExists, err := instanceCreator.InstanceExists(instanceID)
 
-		if error != nil {
-			return binding, error
+		if err != nil {
+			return binding, err
 		}
 
 		if instanceExists {
@@ -136,9 +136,9 @@ func (mongoServiceBroker *MongoServiceBroker) Bind(context context.Context, inst
 				return binding, errors.New("instance binder not found for plan")
 			}
 
-			credentials, error := instanceBinder.Bind(instanceID, bindingID, details)
+			credentials, err := instanceBinder.Bind(instanceID, bindingID, details)
 			binding.Credentials = credentials
-			return binding, error
+			return binding, err
 		}
 	}
 
@@ -147,15 +147,15 @@ func (mongoServiceBroker *MongoServiceBroker) Bind(context context.Context, inst
 
 func (mongoServiceBroker *MongoServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails) error {
 	for _, instanceBinder := range mongoServiceBroker.InstanceBinders {
-		instanceExists, error := instanceBinder.InstanceBindingExists(instanceID, bindingID)
+		instanceExists, err := instanceBinder.InstanceBindingExists(instanceID, bindingID)
 
-		if error != nil {
-			return error
+		if err != nil {
+			return err
 		}
 
 		if instanceExists {
-			error = instanceBinder.Unbind(instanceID, bindingID, details)
-			return error
+			err = instanceBinder.Unbind(instanceID, bindingID, details)
+			return err
 		}
 	}
 

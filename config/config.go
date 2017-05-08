@@ -76,9 +76,9 @@ type PlanMetadataCost struct {
 }
 
 func ParseConfig(path string) (Config, error) {
-	file, error := os.Open(path)
-	if error != nil {
-		return Config{}, error
+	file, err := os.Open(path)
+	if err != nil {
+		return Config{}, err
 	}
 
 	var config Config
@@ -117,7 +117,7 @@ func (config *Config) Services() []brokerapi.Service {
 	serviceMetadata := brokerConfig.ServiceMetadata
 
 	services := []brokerapi.Service{
-		brokerapi.Service{
+		{
 			ID:            brokerConfig.ServiceID,
 			Name:          brokerConfig.ServiceName,
 			Description:   brokerConfig.ServiceDescription,

@@ -25,55 +25,55 @@ const (
 func TestAdminService(t *testing.T) {
 	//-------------------------
 	t.Log("Creating admin service")
-	adminService, error := NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin")
+	adminService, err := NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin")
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	//-------------------------
 	t.Log("Creating database")
-	databaseExists, error := adminService.DatabaseExists(DB1)
+	databaseExists, err := adminService.DatabaseExists(DB1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if databaseExists {
 		t.Fatal("Database %s should not exist", DB1)
 	}
 
-	_, error = adminService.CreateDatabase(DB1)
+	_, err = adminService.CreateDatabase(DB1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	//error = adminService.CreateUser(DB1, User1, Pwd1)
+	//err = adminService.CreateUser(DB1, User1, Pwd1)
 	//
-	//if error != nil {
-	//	t.Fatal("Error: ", error)
+	//if err != nil {
+	//	t.Fatal("Error: ", err)
 	//}
-
-	//error = adminService.DeleteUser(DB1, User1)
 	//
-	//if error != nil {
-	//	t.Fatal("Error: ", error)
+	//err = adminService.DeleteUser(DB1, User1)
+	//
+	//if err != nil {
+	//	t.Fatal("Error: ", err)
 	//}
 
 	//-------------------------
 	t.Log("Save Doc")
 	doc := map[string]string{"_id": "123", "v": "456"}
-	error = adminService.SaveDoc(doc, DB1, Collection1)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	err = adminService.SaveDoc(doc, DB1, Collection1)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	query := &bson.M{"_id": "123"}
 
-	docExists, error := adminService.DocExists(query, DB1, Collection1)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	docExists, err := adminService.DocExists(query, DB1, Collection1)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if !docExists {
@@ -83,14 +83,14 @@ func TestAdminService(t *testing.T) {
 	//-------------------------
 	t.Log("Update Doc")
 	update := map[string]string{"v": "789"}
-	error = adminService.UpdateDoc(query, update, DB1, Collection1)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	err = adminService.UpdateDoc(query, update, DB1, Collection1)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	result, error := adminService.GetOneDoc(query, DB1, Collection1)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	result, err := adminService.GetOneDoc(query, DB1, Collection1)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if result == nil {
@@ -103,14 +103,14 @@ func TestAdminService(t *testing.T) {
 
 	//-------------------------
 	t.Log("Remove Doc")
-	error = adminService.RemoveDoc(query, DB1, Collection1)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	err = adminService.RemoveDoc(query, DB1, Collection1)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	docExists, error = adminService.DocExists(query, DB1, Collection1)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	docExists, err = adminService.DocExists(query, DB1, Collection1)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if docExists {
@@ -119,9 +119,9 @@ func TestAdminService(t *testing.T) {
 
 	//-------------------------
 	t.Log("Delete Database")
-	error = adminService.DeleteDatabase(DB1)
+	err = adminService.DeleteDatabase(DB1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 }

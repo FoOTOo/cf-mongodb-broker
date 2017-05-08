@@ -10,16 +10,16 @@ import (
 
 func TestConfig(t *testing.T) {
 	configPath := "test_config.yml"
-	path, error := filepath.Abs(path.Join("assets", configPath))
+	path, err := filepath.Abs(path.Join("assets", configPath))
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	config, error := ParseConfig(path)
+	config, err := ParseConfig(path)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	fmt.Println("Raw Config ----------------")

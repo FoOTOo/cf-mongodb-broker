@@ -18,7 +18,7 @@ func NewInstanceBinder(adminService *AdminService, repository *Repository) *Inst
 	}
 }
 
-func (instanceBinder *InstanceBinder) Bind(instanceID string, bindingID string, details brokerapi.BindDetails) (credentials bson.M, error error) {
+func (instanceBinder *InstanceBinder) Bind(instanceID string, bindingID string, details brokerapi.BindDetails) (credentials bson.M, err error) {
 	// TODO: ATOM
 	credentials = bson.M{}
 
@@ -28,16 +28,16 @@ func (instanceBinder *InstanceBinder) Bind(instanceID string, bindingID string, 
 
 	// TODO check if user already exists in the DB
 
-	error = instanceBinder.adminService.CreateUser(databaseName, username, password)
+	err = instanceBinder.adminService.CreateUser(databaseName, username, password)
 
-	if error != nil {
-		return credentials, error
+	if err != nil {
+		return credentials, err
 	}
 
-	error = instanceBinder.repository.SaveInstanceBinding(instanceID, bindingID, details)
+	err = instanceBinder.repository.SaveInstanceBinding(instanceID, bindingID, details)
 
-	if error != nil {
-		return credentials, error
+	if err != nil {
+		return credentials, err
 	}
 
 	credentials["uri"] = instanceBinder.adminService.GetConnectionString(databaseName, username, password)
@@ -49,22 +49,22 @@ func (instanceBinder *InstanceBinder) Unbind(instanceID string, bindingID string
 	// TODO: ATOM
 	databaseName := instanceID
 	username := bindingID
-	error := instanceBinder.adminService.DeleteUser(databaseName, username)
+	err := instanceBinder.adminService.DeleteUser(databaseName, username)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
-	error = instanceBinder.repository.DeleteInstanceBinding(instanceID, bindingID, details)
+	err = instanceBinder.repository.DeleteInstanceBinding(instanceID, bindingID, details)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (instanceBinder *InstanceBinder) InstanceBindingExists(instanceID string, bindingID string) (bool, error) {
-	instanceBindingExists, error := instanceBinder.repository.InstanceBindingExists(instanceID, bindingID)
-	return instanceBindingExists, error
+	instanceBindingExists, err := instanceBinder.repository.InstanceBindingExists(instanceID, bindingID)
+	return instanceBindingExists, err
 }

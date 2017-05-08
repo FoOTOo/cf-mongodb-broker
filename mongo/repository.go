@@ -46,8 +46,8 @@ func NewRepository(adminService *AdminService) *Repository {
 }
 
 func (repository *Repository) InstanceExists(instanceID string) (bool, error) {
-	docExists, error := repository.adminService.DocExists(&bson.M{ID: instanceID}, DatabaseName, ServiceInstanceCollectionName)
-	return docExists, error
+	docExists, err := repository.adminService.DocExists(&bson.M{ID: instanceID}, DatabaseName, ServiceInstanceCollectionName)
+	return docExists, err
 }
 
 func (repository *Repository) SaveInstance(instanceID string, details brokerapi.ProvisionDetails) error {
@@ -59,20 +59,20 @@ func (repository *Repository) SaveInstance(instanceID string, details brokerapi.
 		SpaceGUID:           details.SpaceGUID,
 	}
 
-	error := repository.adminService.SaveDoc(serviceInstance, DatabaseName, ServiceInstanceCollectionName)
+	err := repository.adminService.SaveDoc(serviceInstance, DatabaseName, ServiceInstanceCollectionName)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (repository *Repository) DeleteInstance(instanceID string, details brokerapi.DeprovisionDetails) error {
-	error := repository.adminService.RemoveDoc(&bson.M{ID: instanceID}, DatabaseName, ServiceInstanceCollectionName)
+	err := repository.adminService.RemoveDoc(&bson.M{ID: instanceID}, DatabaseName, ServiceInstanceCollectionName)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -84,10 +84,10 @@ func (repository *Repository) UpdateInstance(instanceID string, details brokerap
 		PlanID:              details.PlanID,
 	}
 
-	error := repository.adminService.UpdateDoc(&bson.M{ID: instanceID}, update, DatabaseName, ServiceInstanceCollectionName)
+	err := repository.adminService.UpdateDoc(&bson.M{ID: instanceID}, update, DatabaseName, ServiceInstanceCollectionName)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -100,26 +100,26 @@ func (repository *Repository) SaveInstanceBinding(instanceID, bindingID string, 
 		AppGUID:           details.AppGUID,
 	}
 
-	error := repository.adminService.SaveDoc(serviceInstanceBinding, DatabaseName, ServiceInstanceBindingCollectionName)
+	err := repository.adminService.SaveDoc(serviceInstanceBinding, DatabaseName, ServiceInstanceBindingCollectionName)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (repository *Repository) DeleteInstanceBinding(instanceID, bindingID string, details brokerapi.UnbindDetails) error {
-	error := repository.adminService.RemoveDoc(&bson.M{ID: bindingID}, DatabaseName, ServiceInstanceBindingCollectionName)
+	err := repository.adminService.RemoveDoc(&bson.M{ID: bindingID}, DatabaseName, ServiceInstanceBindingCollectionName)
 
-	if error != nil {
-		return error
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (repository *Repository) InstanceBindingExists(instanceID, bindingID string) (bool, error) {
-	docExists, error := repository.adminService.DocExists(&bson.M{ID: bindingID}, DatabaseName, ServiceInstanceBindingCollectionName)
-	return docExists, error
+	docExists, err := repository.adminService.DocExists(&bson.M{ID: bindingID}, DatabaseName, ServiceInstanceBindingCollectionName)
+	return docExists, err
 }

@@ -21,20 +21,20 @@ const (
 func TestRepository(t *testing.T) {
 	//-------------------------
 	t.Log("Create repo")
-	adminService, error := NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin") // TODO: change
+	adminService, err := NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin") // TODO: change
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	repository := NewRepository(adminService)
 
 	//-------------------------
 	t.Log("Create instance")
-	instanceExists, error := repository.InstanceExists(InstanceID1)
+	instanceExists, err := repository.InstanceExists(InstanceID1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if instanceExists {
@@ -48,16 +48,16 @@ func TestRepository(t *testing.T) {
 		SpaceGUID:        SpaceGUID1,
 	}
 
-	error = repository.SaveInstance(InstanceID1, provisionDetails)
+	err = repository.SaveInstance(InstanceID1, provisionDetails)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	instanceExists, error = repository.InstanceExists(InstanceID1)
+	instanceExists, err = repository.InstanceExists(InstanceID1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if !instanceExists {
@@ -71,19 +71,19 @@ func TestRepository(t *testing.T) {
 		PlanID:    PlanID2,
 	}
 
-	error = repository.UpdateInstance(InstanceID1, updateDetails)
+	err = repository.UpdateInstance(InstanceID1, updateDetails)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	//-------------------------
 	t.Log("Save instance binding")
 
-	instanceBindingExists, error := repository.InstanceBindingExists(InstanceID1, BindingID1)
+	instanceBindingExists, err := repository.InstanceBindingExists(InstanceID1, BindingID1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if instanceBindingExists {
@@ -93,15 +93,15 @@ func TestRepository(t *testing.T) {
 	bindDetails := brokerapi.BindDetails{
 		AppGUID: AppGUID1,
 	}
-	error = repository.SaveInstanceBinding(InstanceID1, BindingID1, bindDetails)
-	if error != nil {
-		t.Fatal("Error: ", error)
+	err = repository.SaveInstanceBinding(InstanceID1, BindingID1, bindDetails)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	instanceBindingExists, error = repository.InstanceBindingExists(InstanceID1, BindingID1)
+	instanceBindingExists, err = repository.InstanceBindingExists(InstanceID1, BindingID1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if !instanceBindingExists {
@@ -112,16 +112,16 @@ func TestRepository(t *testing.T) {
 	t.Log("Delete instance binding")
 
 	unbindDetails := brokerapi.UnbindDetails{}
-	error = repository.DeleteInstanceBinding(InstanceID1, BindingID1, unbindDetails)
+	err = repository.DeleteInstanceBinding(InstanceID1, BindingID1, unbindDetails)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	instanceBindingExists, error = repository.InstanceBindingExists(InstanceID1, BindingID1)
+	instanceBindingExists, err = repository.InstanceBindingExists(InstanceID1, BindingID1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if instanceBindingExists {
@@ -132,16 +132,16 @@ func TestRepository(t *testing.T) {
 	t.Log("Delete instance")
 
 	deprovisionDetails := brokerapi.DeprovisionDetails{}
-	error = repository.DeleteInstance(InstanceID1, deprovisionDetails)
+	err = repository.DeleteInstance(InstanceID1, deprovisionDetails)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
-	instanceExists, error = repository.InstanceExists(InstanceID1)
+	instanceExists, err = repository.InstanceExists(InstanceID1)
 
-	if error != nil {
-		t.Fatal("Error: ", error)
+	if err != nil {
+		t.Fatal("Error: ", err)
 	}
 
 	if instanceExists {

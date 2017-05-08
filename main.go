@@ -33,11 +33,11 @@ func main() {
 		})
 	}
 
-	//adminService, error := mongo.NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin")
-	adminService, error := mongo.NewAdminService(config.MongoHosts(), config.MongoUsername(), config.MongoPassword(), "admin")
+	//adminService, err := mongo.NewAdminService("172.16.0.156", "rootusername", "rootpassword", "admin")
+	adminService, err := mongo.NewAdminService(config.MongoHosts(), config.MongoUsername(), config.MongoPassword(), "admin")
 
-	if error != nil {
-		brokerLogger.Fatal("mongo-admin-service", error)
+	if err != nil {
+		brokerLogger.Fatal("mongo-admin-service", err)
 		return
 	}
 
