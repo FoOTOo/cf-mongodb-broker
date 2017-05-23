@@ -265,7 +265,7 @@ func (adminService *AdminService) DeleteUser(databaseName, username string) erro
 }
 
 func (adminService *AdminService) GetConnectionString(databaseName, username, password string) string {
-	parts := []string{"mongodb://", username, ":", password, "@", adminService.GetServerAddresses(), "/", databaseName, "?replicaSet=", adminService.replSetName}
+	parts := []string{"mongodb://", username, ":", password, "@", adminService.GetServerAddresses(), "/", databaseName}
 	return strings.Join(parts, "")
 }
 

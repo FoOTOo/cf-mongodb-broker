@@ -41,6 +41,7 @@ func (instanceBinder *InstanceBinder) Bind(instanceID string, bindingID string, 
 	}
 
 	credentials["uri"] = instanceBinder.adminService.GetConnectionString(databaseName, username, password)
+	credentials["replicaSet"] = instanceBinder.adminService.replSetName
 
 	return credentials, nil
 }
