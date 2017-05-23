@@ -17,8 +17,9 @@ type Config struct {
 }
 
 type MongoConfig struct {
-	Nodes    MongoNodes    `yaml:"nodes"`
-	RootUser MongoRootUser `yaml:"root"`
+	Nodes           MongoNodes      `yaml:"nodes"`
+	RootUser        MongoRootUser   `yaml:"root"`
+	MongoReplicaSet MongoReplicaSet `yaml:"replSet"`
 }
 
 type MongoRootUser struct {
@@ -29,6 +30,10 @@ type MongoRootUser struct {
 type MongoNodes struct {
 	IPs  []string `yaml:"ips"`
 	Port string   `yaml:"port"`
+}
+
+type MongoReplicaSet struct {
+	name string `yaml:"name"`
 }
 
 type BrokerConfig struct {
@@ -105,6 +110,10 @@ func (config *Config) MongoUsername() string {
 
 func (config *Config) MongoPassword() string {
 	return config.MongoConfig.RootUser.Password
+}
+
+func (config *Config) ReplSetName() string {
+	return config.MongoConfig.MongoReplicaSet.name
 }
 
 func (config *Config) Services() []brokerapi.Service {

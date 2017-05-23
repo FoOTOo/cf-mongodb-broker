@@ -20,17 +20,18 @@ const (
 )
 
 type AdminService struct {
-	hosts      string
-	username   string
-	password   string
-	authSource string
+	hosts       string
+	username    string
+	password    string
+	replSetName string
+	authSource  string
 
 	addresses []string
 
 	dialInfo *mgo.DialInfo
 }
 
-func NewAdminService(hosts, username, password, authSource string) (*AdminService, error) {
+func NewAdminService(hosts, username, password, replSetName, authSource string) (*AdminService, error) {
 	if logEnabled {
 		logger := log.New(os.Stdout, "mongo-broker-mongo:", 0)
 		mgo.SetDebug(true)
@@ -55,12 +56,13 @@ func NewAdminService(hosts, username, password, authSource string) (*AdminServic
 	}
 
 	adminService := &AdminService{
-		hosts:      hosts,
-		username:   username,
-		password:   password,
-		authSource: authSource,
-		addresses:  addresses,
-		dialInfo:   dialInfo,
+		hosts:       hosts,
+		username:    username,
+		password:    password,
+		replSetName: replSetName,
+		authSource:  authSource,
+		addresses:   addresses,
+		dialInfo:    dialInfo,
 	}
 
 	return adminService, nil
@@ -263,7 +265,7 @@ func (adminService *AdminService) DeleteUser(databaseName, username string) erro
 }
 
 func (adminService *AdminService) GetConnectionString(databaseName, username, password string) string {
-	parts := []string{"mongodb://", username, ":", password, "@", adminService.GetServerAddresses(), "/", databaseName}
+	parts := []string{"mongodb://", username, ":", password, "@", adminService.GetServerAddresses(), "/", databaseName, "?replicaSet=", adminService.replSetName}
 	return strings.Join(parts, "")
 }
 
